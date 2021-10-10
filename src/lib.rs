@@ -1,13 +1,10 @@
-enum SSOErrorKind {
-    SSOConnectionError,
-}
+mod russoerror;
+mod server;
 
-struct SSOError {
-    kind: SSOErrorKind,
-    message: String,
-}
+use russoerror::SSOError;
 
 trait Role {
+    fn name(&self) -> String;
 }
 
 trait Policy {
@@ -27,7 +24,10 @@ trait SSOConnector {
     fn get_policies(&self) -> Vec<Self::P>;
 }
 
-struct SSOConfig<S> where S: SSOConnector {
+struct SSOConfig<S>
+where
+    S: SSOConnector,
+{
     url: String,
     server: S,
     user: String,
@@ -37,7 +37,8 @@ struct SSOConfig<S> where S: SSOConnector {
 }
 
 impl<S> SSOConfig<S>
-where S: SSOConnector
+where
+    S: SSOConnector,
 {
     fn new(url: String, server: S, user: String, password: String) -> Self {
         let roles = server.get_roles();
@@ -51,5 +52,4 @@ where S: SSOConnector
             policies: Some(policies),
         }
     }
- 
 }

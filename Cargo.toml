@@ -7,3 +7,4 @@ readme = "README.md"
 description = "SSO library for common servers written in Rust."
 
 [dependencies]
+uuid = "0.5.1"
