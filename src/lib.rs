@@ -3,53 +3,43 @@ mod server;
 
 use russoerror::SSOError;
 
-trait Role {
-    fn name(&self) -> String;
-}
-
 trait Policy {
-    type R: Role;
+    type R: Clone;
 
     fn role_is_authorized(&self, role: Self::R) -> bool;
 }
 
-trait SSOConnector {
-    type R: Role;
-    type P: Policy;
+trait SSOConnector<A> {
+    type R: Clone;
+    type P: Policy + Clone;
 
-    fn connect(&self, user: String, password: String) -> Result<bool, SSOError>;
+    fn authenticate(&self) -> Result<A, SSOError>;
 
     fn get_roles(&self) -> Vec<Self::R>;
 
     fn get_policies(&self) -> Vec<Self::P>;
 }
 
-struct SSOConfig<S>
+struct SSOConfig<S, A>
 where
-    S: SSOConnector,
+    S: SSOConnector<A>,
 {
-    url: String,
     server: S,
-    user: String,
-    password: String,
-    roles: Option<Vec<<S as SSOConnector>::R>>,
-    policies: Option<Vec<<S as SSOConnector>::P>>,
+    roles: Option<Vec<<S as SSOConnector<A>>::R>>,
+    policies: Option<Vec<<S as SSOConnector<A>>::P>>,
 }
 
-impl<S> SSOConfig<S>
+impl<S: Clone, A> SSOConfig<S, A>
 where
-    S: SSOConnector,
+    S: SSOConnector<A>,
 {
-    fn new(url: String, server: S, user: String, password: String) -> Self {
-        let roles = server.get_roles();
-        let policies = server.get_policies();
+    fn new(url: String, server: S) -> Self {
+        let roles = &server.get_roles();
+        let policies = &server.get_policies();
         SSOConfig {
-            url,
             server,
-            user,
-            password,
-            roles: Some(roles),
-            policies: Some(policies),
+            roles: Some(roles.to_vec()),
+            policies: Some(policies.to_vec()),
         }
     }
 }
