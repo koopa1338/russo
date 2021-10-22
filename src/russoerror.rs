@@ -1,8 +1,8 @@
-pub(crate) enum SSOErrorKind {
+pub enum SSOErrorKind {
     SSOConnectionError,
 }
 
-pub(crate) struct SSOError {
+pub struct SSOError {
     kind: SSOErrorKind,
     message: String,
 }
