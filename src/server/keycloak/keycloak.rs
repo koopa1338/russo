@@ -56,14 +56,34 @@ impl KeycloakServer {
         Ok(executor::block_on(result.unwrap().json::<T>()).unwrap())
     }
 
-    // TODO: Return type
-    pub fn role_by_id(&self, role_id: String) {
-        unimplemented!();
+    pub fn role_by_id(&mut self, role_id: String) -> Result<KeycloakRole, SSOError> {
+        let roles = match &self.roles {
+            None => {
+                // not fetched the roles from the server
+                self.roles()?
+            },
+            Some(roles) => {
+                roles.to_vec()
+            },
+        };
+
+        let role = roles.iter().find(|&r| *r.id.as_ref().unwrap() == role_id).unwrap().clone();
+        Ok(role)
     }
 
-    // TODO: Return type
-    pub fn role_by_name(&self, role_name: String) {
-        unimplemented!();
+    pub fn role_by_name(&mut self, role_name: String) -> Result<KeycloakRole, SSOError> {
+        let roles = match &self.roles {
+            None => {
+                // not fetched the roles from the server
+                self.roles()?
+            },
+            Some(roles) => {
+                roles.to_vec()
+            },
+        };
+
+        let role = roles.iter().find(|&r| *r.name.as_ref().unwrap() == role_name).unwrap().clone();
+        Ok(role)
     }
 
     pub fn groups(&mut self) -> Result<Vec<KeycloakGroup>, SSOError> {
