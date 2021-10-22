@@ -1,7 +1,7 @@
-use reqwest::Client;
-use serde::Serialize;
+use futures::executor;
+use reqwest::{Client, Method};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use uuid::Uuid;
 
 use crate::{Policy, SSOConnector, SSOError};
 
@@ -26,16 +26,31 @@ pub struct KeycloakServer {
     username: String,
     password: String,
     groups: Option<Vec<String>>,
+    auth: Option<KeycloakAuth>,
 }
 
-#[derive(Clone)]
+impl KeycloakServer {
+    pub fn roles_by_id(&self, role_id: String) {
+        unimplemented!();
+    }
+
+    pub fn roles_by_name(&self, role_name: String) {
+        unimplemented!();
+    }
+
+    pub fn groups(&self) -> Vec<KeycloakGroup> {
+        unimplemented!();
+    }
+}
+
+#[derive(Clone, Deserialize)]
 pub struct KeycloakRole {
     attributes: Option<HashMap<String, String>>, //REVIEW: not sure what the types are here, use strings for now
     client_role: Option<bool>,
     composite: Option<bool>,
     // composites: do we need this, if so we need a struct for that
     description: Option<String>,
-    id: Option<Uuid>,
+    id: Option<String>,
     name: Option<String>,
 }
 
@@ -44,7 +59,7 @@ pub struct KeycloakPolicy {
     config: Option<HashMap<String, String>>, //REVIEW: not sure what the types are here, use strings for now
     decision_strat: Option<DecisionStrat>,
     description: Option<String>,
-    id: Option<Uuid>,
+    id: Option<String>,
     logic: Option<Logic>,
     owner: Option<String>,
     policies: Option<Vec<String>>,
@@ -67,29 +82,20 @@ pub struct KeycloakGroup {
     access: Option<HashMap<String, String>>, //REVIEW: not sure what the types are here, use strings for now
     attributes: Option<HashMap<String, String>>, //REVIEW: not sure what the types are here, use strings for now
     client_roles: Option<HashMap<String, String>>, //REVIEW: not sure what the types are here, use strings for now
-    id: Option<Uuid>,
+    id: Option<String>,
     realm_roles: Option<Vec<String>>,
     sub_groups: Option<Vec<KeycloakGroup>>,
 }
 
-impl KeycloakServer {
-    pub fn get_roles(&self) {
-        unimplemented!();
-    }
-
-    pub fn get_roles_by(&self, role_id: Uuid) {
-        unimplemented!();
-    }
-
-    pub fn get_groups(&self) -> Vec<KeycloakGroup> {
-        unimplemented!();
-    }
-}
-
+#[derive(Clone, Deserialize)]
 struct KeycloakAuth {
-    // TODO: check if the token is all we get.
     access_token: String,
-    session_token: String,
+    access_token_expires: usize,
+    refresh_token: String,
+    refresh_token_expires: usize,
+    scopes: Vec<String>,
+    token_type: String, //maybe enum?
+    session_state: String,
 }
 
 #[derive(Serialize, Debug)]
@@ -105,38 +111,48 @@ impl SSOConnector<KeycloakAuth> for KeycloakServer {
 
     type P = KeycloakPolicy;
 
-    /* TODO: we have 2 options here:
-     * 1. we use async functions inside authenticate and have to poll the result from the future
-     * 2. we make all functions async -> async traits seem very complicated and might not be worth it
-     */
-    fn authenticate(&self) -> Result<KeycloakAuth, SSOError> {
-        let result = async {
-            let client = Client::new();
+    fn authenticate(&mut self) -> Result<KeycloakAuth, SSOError> {
+        let client = Client::new();
+        let result = executor::block_on(
             client
-                .post(format!(
-                    "{}/auth/realms/{}/protocol/openid-connect/token",
-                    self.url, self.realm
-                ))
+                .request(
+                    Method::POST,
+                    format!(
+                        "{}/auth/realms/{}/protocol/openid-connect/token",
+                        self.url, self.realm
+                    ),
+                )
                 .form(&KeycloakAuthRequest {
                     client_id: self.client_id.clone(),
                     username: self.username.clone(),
                     password: self.password.clone(),
                     grant_type: "password".into(),
                 })
-                .send()
-        };
-        // TODO: get KeycloakAuth from the result future
-        Ok(KeycloakAuth {
-            access_token: "bearer token".into(),
-            session_token: "session".into(),
-        })
+                .send(),
+        );
+        let auth = executor::block_on(result.unwrap().json::<KeycloakAuth>()).unwrap();
+        self.auth = Some(auth.clone());
+        Ok(auth)
     }
 
-    fn get_roles(&self) -> Vec<Self::R> {
-        unimplemented!();
+    fn roles(&self) -> Result<Vec<KeycloakRole>, SSOError> {
+        let client = Client::new();
+        let result = executor::block_on(
+            client
+                .request(
+                    Method::GET,
+                    format!(
+                        "{}/{}/clients/{}/roles",
+                        self.url, self.realm, self.client_id
+                    ),
+                )
+                .bearer_auth(&self.auth.as_ref().unwrap().access_token)
+                .send(),
+        );
+        Ok(executor::block_on(result.unwrap().json::<Vec<KeycloakRole>>()).unwrap())
     }
 
-    fn get_policies(&self) -> Vec<Self::P> {
+    fn policies(&self) -> Result<Vec<KeycloakPolicy>, SSOError> {
         unimplemented!();
     }
 }

@@ -13,11 +13,15 @@ trait SSOConnector<A> {
     type R: Clone;
     type P: Policy + Clone;
 
-    fn authenticate(&self) -> Result<A, SSOError>;
+    // REVIEW: we use a mut self because we want to store the authentication information like
+    // tokens, session id or cookies in the struct we implement the trait for.
+    fn authenticate(&mut self) -> Result<A, SSOError>;
 
-    fn get_roles(&self) -> Vec<Self::R>;
+    fn roles(&self) -> Result<Vec<Self::R>, SSOError>;
 
-    fn get_policies(&self) -> Vec<Self::P>;
+    // REVIEW: do we need policies or should this be implemented on demand for the needed
+    // servertype?
+    fn policies(&self) -> Result<Vec<Self::P>, SSOError>;
 }
 
 struct SSOConfig<S, A>
@@ -33,13 +37,19 @@ impl<S: Clone, A> SSOConfig<S, A>
 where
     S: SSOConnector<A>,
 {
-    fn new(url: String, server: S) -> Self {
-        let roles = &server.get_roles();
-        let policies = &server.get_policies();
+    fn new(server: S) -> Self {
+        let roles = match &server.roles() {
+            Ok(roles) => Some(roles.to_vec()),
+            Err(..) => None,
+        };
+        let policies = match &server.policies() {
+            Ok(policies) => Some(policies.to_vec()),
+            Err(..) => None,
+        };
         SSOConfig {
             server,
-            roles: Some(roles.to_vec()),
-            policies: Some(policies.to_vec()),
+            roles,
+            policies,
         }
     }
 }
