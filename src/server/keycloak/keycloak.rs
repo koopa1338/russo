@@ -61,13 +61,15 @@ impl KeycloakServer {
             None => {
                 // not fetched the roles from the server
                 self.roles()?
-            },
-            Some(roles) => {
-                roles.to_vec()
-            },
+            }
+            Some(roles) => roles.to_vec(),
         };
 
-        let role = roles.iter().find(|&r| *r.id.as_ref().unwrap() == role_id).unwrap().clone();
+        let role = roles
+            .iter()
+            .find(|&r| *r.id.as_ref().unwrap() == role_id)
+            .unwrap()
+            .clone();
         Ok(role)
     }
 
@@ -76,13 +78,15 @@ impl KeycloakServer {
             None => {
                 // not fetched the roles from the server
                 self.roles()?
-            },
-            Some(roles) => {
-                roles.to_vec()
-            },
+            }
+            Some(roles) => roles.to_vec(),
         };
 
-        let role = roles.iter().find(|&r| *r.name.as_ref().unwrap() == role_name).unwrap().clone();
+        let role = roles
+            .iter()
+            .find(|&r| *r.name.as_ref().unwrap() == role_name)
+            .unwrap()
+            .clone();
         Ok(role)
     }
 
