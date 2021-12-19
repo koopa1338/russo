@@ -14,6 +14,8 @@ enum Logic {
     Negative,
 }
 
+/// Keycloak representation of a role, see the keycloak documentation for more information:
+/// https://www.keycloak.org/docs-api/16.0/rest-api/index.html#_rolerepresentation
 #[derive(Clone, Deserialize)]
 pub struct KeycloakRole {
     pub attributes: Option<HashMap<String, String>>, //REVIEW: not sure what the types are here, use strings for now
@@ -25,6 +27,8 @@ pub struct KeycloakRole {
     pub name: Option<String>,
 }
 
+/// Keycloak representation of a group, see the keycloak documentation for more information:
+/// https://www.keycloak.org/docs-api/16.0/rest-api/index.html#_grouprepresentation
 #[derive(Clone, Deserialize)]
 pub struct KeycloakGroup {
     pub access: Option<HashMap<String, String>>, //REVIEW: not sure what the types are here, use strings for now

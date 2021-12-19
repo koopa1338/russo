@@ -5,8 +5,8 @@ use russoerror::SSOError;
 
 /// A SSO connector trait that is generic over a server authentication type A and has a associated
 /// type R that represents a role to enable role based permissions
-/// The authentication type is a struct that represents a authentication state but could contain
-/// see one of the default implementations.
+/// The authentication type is a struct that represents a authentication state with data that th
+/// server expects. See one of the default implementations.
 trait SSOConnector<A> {
     type R: Clone;
 
