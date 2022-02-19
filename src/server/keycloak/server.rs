@@ -5,6 +5,7 @@ use serde::Deserialize;
 use super::model::{KeycloakAuth, KeycloakGroup, KeycloakRole};
 use crate::{SSOConnector, SSOError};
 
+#[allow(dead_code)]
 pub struct KeycloakServer {
     url: String,
     realm: String,

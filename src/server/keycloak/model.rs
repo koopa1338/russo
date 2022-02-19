@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 #[derive(Clone)]
+#[allow(dead_code)]
 enum DecisionStrat {
     Affirmative,
     Unanimous,
@@ -9,6 +10,7 @@ enum DecisionStrat {
 }
 
 #[derive(Clone)]
+#[allow(dead_code)]
 enum Logic {
     Positive,
     Negative,

@@ -1,2 +1,2 @@
-pub mod keycloak;
+pub mod server;
 pub mod model;
