@@ -119,8 +119,8 @@ impl SSOConnector<KeycloakAuth> for KeycloakServer {
         Ok(auth)
     }
 
-    fn roles(&mut self) -> Result<Vec<KeycloakRole>, SSOError> {
-        let roles = self.keycloak_request::<Vec<KeycloakRole>>(
+    fn roles(&mut self) -> Result<Vec<Self::R>, SSOError> {
+        let roles = self.keycloak_request::<Vec<Self::R>>(
             format!(
                 "{}/{}/clients/{}/roles",
                 self.url, self.realm, self.client_id
